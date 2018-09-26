@@ -78,6 +78,21 @@ async function refund(fromAddr, amount) {
   await confirmation
 }
 
+async function transferCCY(fromAddr, toAddr, amount, value) {
+  const tx = await myToken.send("transferCCY", [toAddr, value], {
+    senderAddress: fromAddr,
+    amount: amount
+  })
+
+  console.log("transferCCY tx:", tx.txid)
+  console.log(tx)
+
+  // or: await tx.confirm(1)
+  const confirmation = tx.confirm(1)
+  ora.promise(confirmation, "confirm transferCCY")
+  await confirmation
+}
+
 async function streamEvents() {
   console.log("Subscribed to contract events")
   console.log("Ctrl-C to terminate events subscription")
@@ -150,6 +165,26 @@ async function main() {
       //console.log(amount)
       //return
       await refund(fromAddr, amount)
+      break
+    }
+    case "transferCCY":
+    {
+      const fromAddr = argv._[1]
+      const toAddr = argv._[2]
+      var amount = argv._[3]    //unit is always eth!
+      var value = argv._[4]
+      const unit = argv._[5]
+      if (unit === 'eth' || unit === undefined) {
+        value = parseFloat(value) * 100000000
+        value = '' + parseInt(value)
+      } else if (unit === 'wei') {
+      } else {
+        console.log('undefined unit')
+        return
+      }
+      //console.log(amount)
+      //return
+      await transferCCY(fromAddr, toAddr, amount, value)
       break
     }
     case "getbalance":
