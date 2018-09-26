@@ -7,38 +7,18 @@ const {
 } = require("qtumjs")
 
 const repoData = require("./solar.development.json")
-const qtum = new Qtum("http://qtum:test@localhost:4889", repoData)
-const myToken = qtum.contract("zeppelin-solidity/contracts/token/ERC20/ERC20Capped.sol")
+const qtum = new Qtum("http://test:test@localhost:13889", repoData)
+const myToken = qtum.contract("ctcoin-solidity/ctcoin.sol")
 
-async function totalSupply() {
-  const result = await myToken.call("totalSupply")
-
-  // supply is a BigNumber instance (see: bn.js)
-  const supply = result.outputs[0]
-
-  console.log("supply", supply.toNumber())
-}
-
-async function balanceOf(owner) {
-  const res = await myToken.call("balanceOf", [owner])
+async function getbalance(callerAddr, dstAddr) {
+  const res = await myToken.call("getbalance", [dstAddr],{
+    senderAddress: callerAddr,
+  })
 
   // balance is a BigNumber instance (see: bn.js)
   const balance = res.outputs[0]
 
   console.log(`balance:`, balance.toNumber())
-}
-
-async function mint(toAddr, amount) {
-  const tx = await myToken.send("mint", [toAddr, amount])
-
-  console.log("mint tx:", tx.txid)
-  console.log(tx)
-
-  // or: await tx.confirm(1)
-  const confirmation = tx.confirm(1)
-  ora.promise(confirmation, "confirm mint")
-  const receipt = await confirmation
-  console.log("tx receipt:", JSON.stringify(receipt, null, 2))
 }
 
 async function transfer(fromAddr, toAddr, amount) {
@@ -52,6 +32,35 @@ async function transfer(fromAddr, toAddr, amount) {
   // or: await tx.confirm(1)
   const confirmation = tx.confirm(1)
   ora.promise(confirmation, "confirm transfer")
+  await confirmation
+}
+
+async function deposit(fromAddr, amount) {
+  const tx = await myToken.send("deposit", '', {
+    senderAddress: fromAddr,
+    amount: amount
+  })
+
+  console.log("deposit tx:", tx.txid)
+  console.log(tx)
+
+  // or: await tx.confirm(1)
+  const confirmation = tx.confirm(1)
+  ora.promise(confirmation, "confirm deposit")
+  await confirmation
+}
+
+async function transport(fromAddr, toAddr, amount) {
+  const tx = await myToken.send("transport", [toAddr, amount], {
+    senderAddress: fromAddr
+  })
+
+  console.log("transport tx:", tx.txid)
+  console.log(tx)
+
+  // or: await tx.confirm(1)
+  const confirmation = tx.confirm(1)
+  ora.promise(confirmation, "confirm transport")
   await confirmation
 }
 
@@ -85,30 +94,28 @@ async function main() {
   }
 
   switch (cmd) {
-    case "supply":
-    case "totalSupply":
-      await totalSupply()
+    case "deposit":
+    {
+      const fromAddr = argv._[1]
+      const amount = argv._[2]
+      await deposit(fromAddr, amount)
       break
-    case "balance":
-      const owner = argv._[1]
-      if (!owner) {
-        throw new Error("please specify an address")
-      }
-      await balanceOf(owner)
-      break
-    case "mint":
-      const mintToAddr = argv._[1]
-      const mintAmount = parseInt(argv._[2])
-      await mint(mintToAddr, mintAmount)
-
-      break
-    case "transfer":
+    }
+    case "transport":
+    {
       const fromAddr = argv._[1]
       const toAddr = argv._[2]
       const amount = argv._[3]
-
-      await transfer(fromAddr, toAddr, amount)
+      await transport(fromAddr, toAddr, amount)
       break
+    }
+    case "getbalance":
+    {
+      const callerAddr = argv._[1]
+      const dstAddr = argv._[2]
+      await getbalance(callerAddr, dstAddr)
+      break
+    }
     case "logs":
       const fromBlock = parseInt(argv._[1]) || 0
       const toBlock = parseInt(argv._[2]) || "latest"
