@@ -105,7 +105,18 @@ async function main() {
     {
       const fromAddr = argv._[1]
       const toAddr = argv._[2]
-      const amount = argv._[3]
+      var amount = argv._[3]
+      const unit = argv._[4]
+      if (unit === 'eth' || unit === undefined) {
+        amount = parseFloat(amount) * 100000000
+        amount = '' + parseInt(amount)
+      } else if (unit === 'wei') {
+      } else {
+        console.log('undefined unit')
+        return
+      }
+      //console.log(amount)
+      //return
       await transport(fromAddr, toAddr, amount)
       break
     }
