@@ -64,6 +64,20 @@ async function transport(fromAddr, toAddr, amount) {
   await confirmation
 }
 
+async function refund(fromAddr, amount) {
+  const tx = await myToken.send("refund", [amount], {
+    senderAddress: fromAddr
+  })
+
+  console.log("refund tx:", tx.txid)
+  console.log(tx)
+
+  // or: await tx.confirm(1)
+  const confirmation = tx.confirm(1)
+  ora.promise(confirmation, "confirm refund")
+  await confirmation
+}
+
 async function streamEvents() {
   console.log("Subscribed to contract events")
   console.log("Ctrl-C to terminate events subscription")
@@ -118,6 +132,24 @@ async function main() {
       //console.log(amount)
       //return
       await transport(fromAddr, toAddr, amount)
+      break
+    }
+    case "refund":
+    {
+      const fromAddr = argv._[1]
+      var amount = argv._[2]
+      const unit = argv._[3]
+      if (unit === 'eth' || unit === undefined) {
+        amount = parseFloat(amount) * 100000000
+        amount = '' + parseInt(amount)
+      } else if (unit === 'wei') {
+      } else {
+        console.log('undefined unit')
+        return
+      }
+      //console.log(amount)
+      //return
+      await refund(fromAddr, amount)
       break
     }
     case "getbalance":
