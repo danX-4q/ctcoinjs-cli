@@ -1,3 +1,5 @@
 solar.development.json
 node_modules/
 ctcoin-solidity/
+node*--index.js
+wrp-index.js
